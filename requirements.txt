@@ -1,0 +1,11 @@
+mastodon.py
+dotenv
+os
+json
+openai
+tweepy
+argparse
+shutil
+datetime
+requests
+beautifulesoup4
