@@ -9,7 +9,7 @@ load_dotenv()
 
 maxlength=14000
 mincommentlength=250
-maxarticleage=22
+maxarticleage=22 #in hours
 currenttopcomments=0
 topcommentedurl = ""
 
@@ -28,6 +28,10 @@ for linkrow in linkrows:
       itemlink=cell.attrs['href']
       if "hours ago" in cell.text:
         articleage=int(''.join(filter(str.isdigit, cell.text)))
+      if "day ago" in cell.text:
+        articleage=int(''.join(filter(str.isdigit, cell.text)))*24
+      if "days ago" in cell.text:
+        articleage=int(''.join(filter(str.isdigit, cell.text)))*24
       if "comments" in cell.text:
         numcomments = int(''.join(filter(str.isdigit, cell.text)))
   #check for article freshness
