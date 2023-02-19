@@ -5,6 +5,7 @@ import json
 import openai
 import tweepy
 import argparse
+import re
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-ni", "--noninteractive", help="Don't ask for confirmation to post", action='store_true')
@@ -32,27 +33,43 @@ title=data['title']
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-tweetprompt="Write a tweet introducing a blog post titled: "+title
+tweetprompt="Write a tweet with less than 200 characters introducing a blog post titled: "+title
 print(tweetprompt)
 
-response = openai.Completion.create(
-  model="text-davinci-003",
-  prompt=tweetprompt,
-  temperature=0.7,
-  max_tokens=60,
-  top_p=1,
-  frequency_penalty=0,
-  presence_penalty=1
-)
+try:
+  response = openai.Completion.create(
+    model="text-davinci-003",
+    prompt=tweetprompt,
+    temperature=0.7,
+    max_tokens=60,
+    top_p=1,
+    frequency_penalty=0,
+    presence_penalty=1
+  )
+except openai.error.OpenAIError as e:
+  print("Error")
+  print(e.http_status)
+  print(e.error)
+  exit(1)
+  
+toot = response.choices[0].text.strip().replace('"','')
+#sometimes, ChatGPT inserts example placeholder URLs.  This replaces it with correct URL.
+toot = re.sub(r'http\S+', post_url, toot)
 
-intro = response.choices[0].text.strip().replace('"','')
-
-endoffirstparagraph=0
-if "#" in intro:
-    firsthashtagpos = intro.index("#")
-    toot=intro[0:firsthashtagpos]+"\n"+post_url+"\n"+intro[firsthashtagpos:]
-else:
-    toot=intro+"\n"+post_url
+#if there was no placeholder, find another spot
+if post_url not in toot:
+  #contains tags
+  if "#" in toot:
+      desiredposition = len(toot)
+      spacesharp=desiredposition
+      space=desiredposition
+      while spacesharp==space:
+          desiredposition=space
+          spacesharp=toot.rfind(" #",1,desiredposition)
+          space=toot.rfind(" ",1,desiredposition)
+      toot=toot[0:desiredposition]+"\n"+post_url+"\n"+toot[desiredposition:].strip()
+  else:
+      toot=toot+"\n"+post_url
 
 print("\n\nToot:\n")
 print(toot)
@@ -70,11 +87,10 @@ if args.noninteractive==False:
     quit()
     
 mastodon_access_token = os.getenv("MASTODON_ACCESS_TOKEN")
-mastodon_url = os.getenv("MASTODON_URL")
 
 if len(mastodon_access_token)>5:
   print("Posting to Mastodon")
-  mastodon = Mastodon(access_token = mastodon_access_token,api_base_url = mastodon_url)
+  mastodon = Mastodon(access_token = mastodon_access_token,api_base_url = "https://botsin.space/")
   mastodon.toot(toot)
 
 twitter_consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
