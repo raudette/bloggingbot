@@ -140,6 +140,7 @@ def getimage():
     print("Writing to "+versionfilename)
     urllib.request.urlretrieve(image_url, versionfilename)
   except openai.error.OpenAIError as e:
+    print("Error")
     print(e.http_status)
     print(e.error)
     versionfilename="./NoImageGenerated.png"  
@@ -173,15 +174,21 @@ def getarticle():
   global articletext
   global articleprompt
 
-  response = openai.Completion.create(
-    model="text-davinci-003",
-    prompt=articleprompt,
-    temperature=0.7,
-    max_tokens=500,
-    top_p=1,
-    frequency_penalty=1,
-    presence_penalty=0
-  )
+  try:
+    response = openai.Completion.create(
+      model="text-davinci-003",
+      prompt=articleprompt,
+      temperature=0.7,
+      max_tokens=500,
+      top_p=1,
+      frequency_penalty=1,
+      presence_penalty=0
+    )
+  except openai.error.OpenAIError as e:
+    print("Error")
+    print(e.http_status)
+    print(e.error)
+    exit(1)
 
   print(response)
 
@@ -193,15 +200,21 @@ def createtitle():
   global articletext
   global title
 
-  response = openai.Completion.create(
-    model="text-davinci-003",
-    prompt="Create a catchy title for the following blog text:\n" + articletext,
-    temperature=0.7,
-    max_tokens=60,
-    top_p=1,
-    frequency_penalty=0,
-    presence_penalty=1
-  )
+  try:
+    response = openai.Completion.create(
+      model="text-davinci-003",
+      prompt="Create a catchy title for the following blog text:\n" + articletext,
+      temperature=0.7,
+      max_tokens=60,
+      top_p=1,
+      frequency_penalty=0,
+      presence_penalty=1
+    )
+  except openai.error.OpenAIError as e:
+    print("Error")
+    print(e.http_status)
+    print(e.error)
+    exit(1)
   print(response.choices[0].text)
 
   title=response.choices[0].text.replace('"','')
@@ -248,7 +261,7 @@ parser.add_argument("-f", "--file", help="use ", action='store_true')
 args = parser.parse_args()
 
 if args.noninteractive:
-  print("Warning: no error handling!")
+  print("Building article")
   inputfile = args.inputfile
   if len(inputfile)>1:
     # Opening JSON file
