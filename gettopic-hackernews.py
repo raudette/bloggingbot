@@ -59,15 +59,21 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 blogprompt = "Write a blog post about this text: \n\n " + allcommenttext +"\n\n"
 
-response = openai.Completion.create(
-  model="text-davinci-003",
-  prompt="identify 2 keywords from the following text:\n" + allcommenttext,
-  temperature=0.7,
-  max_tokens=30,
-  top_p=1,
-  frequency_penalty=0,
-  presence_penalty=1
-)
+try:
+  response = openai.Completion.create(
+    model="text-davinci-003",
+    prompt="identify 2 keywords from the following text:\n" + allcommenttext,
+    temperature=0.7,
+    max_tokens=30,
+    top_p=1,
+    frequency_penalty=0,
+    presence_penalty=1
+  )
+except openai.error.OpenAIError as e:
+  print("Error")
+  print(e.http_status)
+  print(e.error)
+  exit(1)
 
 keywords = ''.join(filter(str.isalpha, response.choices[0].text.lower())).replace("keyword","")[0:15]
 
