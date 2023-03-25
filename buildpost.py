@@ -27,7 +27,7 @@ def pusharticle():
   global title
   global iArticleRevision
   global sourceurl
-  filename="./draft/"+identifier+"/"+identifier+"."+str(iArticleRevision)+".md"
+  filename="./draft/"+identifier+"/index."+str(iArticleRevision)+".md"
   print("Creating" + filename)
   with open(filename, 'w') as f:
     f.write('---\n')
@@ -49,14 +49,14 @@ def pusharticle():
       endoffirstparagraph = articletext.index("\n", 5)
       f.write(articletext[0:endoffirstparagraph])
     f.write('{{% center %}}\n')
-    f.write('![img](../'+identifier+'.png "img")\n')
+    f.write('![img](./'+identifier+'.png "img")\n')
     f.write('{{% /center %}}\n')
     #look for the end of the first paragraph
     f.write(articletext[endoffirstparagraph:])
     f.write('\n')
     f.write('\n')
 
-  destinationfile=postrootfolder + identifier + "/" + identifier + ".md"
+  destinationfile=postrootfolder + identifier + "/index.md"
   print("Pushing "+destinationfile)
   shutil.copyfile(filename,destinationfile)
   iArticleRevision=iArticleRevision+1
@@ -175,25 +175,46 @@ def getarticle():
   global articleprompt
 
   try:
-    response = openai.Completion.create(
-      model="text-davinci-003",
-      prompt=articleprompt,
-      temperature=0.7,
-      max_tokens=500,
-      top_p=1,
-      frequency_penalty=1,
-      presence_penalty=0
+#    response = openai.ChatCompletion.create(
+#      model="gpt-3.5-turbo",
+#      messages=[
+#            {"role": "user", "content": articleprompt},
+#        ],
+#      temperature=0.7,
+#      max_tokens=700,
+#      top_p=1,
+#      frequency_penalty=1,
+#      presence_penalty=0
+#    )
+    response = openai.ChatCompletion.create(
+      model="gpt-3.5-turbo",
+      messages=[
+            {"role": "system", "content": "You are a journalist"},
+            {"role": "user", "content": articleprompt},
+        ],
     )
+
+#    response = openai.Completion.create(
+#      model="text-davinci-003",
+#      model="gpt-3.5-turbo",
+#      prompt=articleprompt,
+#      temperature=0.7,
+#      max_tokens=700,
+#      top_p=1,
+#      frequency_penalty=1,
+#      presence_penalty=0
+#    )
   except openai.error.OpenAIError as e:
     print("Error")
     print(e.http_status)
     print(e.error)
     exit(1)
 
-  print(response)
-
-  articletext=response.choices[0].text
-
+  #print(response)
+  print("Finish reason: ")
+  print(response['choices'][0]['finish_reason'])
+  #articletext=response.choices[0].text
+  articletext = response['choices'][0]['message']['content']
   pusharticle()  
 
 def createtitle():
@@ -201,23 +222,20 @@ def createtitle():
   global title
 
   try:
-    response = openai.Completion.create(
-      model="text-davinci-003",
-      prompt="Create a catchy title for the following blog text:\n" + articletext,
-      temperature=0.7,
-      max_tokens=60,
-      top_p=1,
-      frequency_penalty=0,
-      presence_penalty=1
+    response = openai.ChatCompletion.create(
+      model="gpt-3.5-turbo",
+      messages=[
+            {"role": "system", "content": "You are a journalist"},
+            {"role": "user", "content": "Create a catchy title for the following blog text:\n" + articletext},
+        ],
     )
   except openai.error.OpenAIError as e:
     print("Error")
     print(e.http_status)
     print(e.error)
     exit(1)
-  print(response.choices[0].text)
 
-  title=response.choices[0].text.replace('"','')
+  title=response['choices'][0]['message']['content'].replace('"','')
 
   pusharticle()  
 

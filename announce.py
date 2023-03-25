@@ -25,7 +25,7 @@ identifier=data['identifier']
 
 #get get title, build out post url
 filename="./draft/" + identifier + "/" + identifier + ".json"
-post_url=site_url +"post/"+ identifier + "/" + identifier + "/"
+post_url=site_url +"post/"+ identifier + "/" 
 
 f = open(filename)
 data = json.load(f)
@@ -46,13 +46,20 @@ try:
     frequency_penalty=0,
     presence_penalty=1
   )
+  response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+          {"role": "system", "content": "You are a helpful assistant"},
+          {"role": "user", "content": tweetprompt},
+      ],
+  )
 except openai.error.OpenAIError as e:
   print("Error")
   print(e.http_status)
   print(e.error)
   exit(1)
   
-toot = response.choices[0].text.strip().replace('"','')
+toot=response['choices'][0]['message']['content'].replace('"','')
 #sometimes, ChatGPT inserts example placeholder URLs.  This replaces it with correct URL.
 toot = re.sub(r'http\S+', post_url, toot)
 
