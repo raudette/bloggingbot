@@ -1,7 +1,8 @@
 {
     "subreddit": "TorontoRealEstate",
     "tags": "TorontoRealEstate",
-    "maxagehours": 168,
+    "maxagehours": 84,
+    "minagehours": 42,
     "categories": [
       "Buying",
       "Investing",
