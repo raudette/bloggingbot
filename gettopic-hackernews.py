@@ -57,17 +57,15 @@ for comment in comments:
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-blogprompt = "Write a blog post about this text: \n\n " + allcommenttext +"\n\n"
+blogprompt = "Write an article about this text: \n\n " + allcommenttext +"\n\n"
 
 try:
-  response = openai.Completion.create(
-    model="text-davinci-003",
-    prompt="identify 2 keywords from the following text:\n" + allcommenttext,
-    temperature=0.7,
-    max_tokens=30,
-    top_p=1,
-    frequency_penalty=0,
-    presence_penalty=1
+  response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+          {"role": "system", "content": "You are a helpful assistant"},
+          {"role": "user", "content": "identify 2 keywords from the following text:\n" + allcommenttext},
+      ],
   )
 except openai.error.OpenAIError as e:
   print("Error")
@@ -75,7 +73,7 @@ except openai.error.OpenAIError as e:
   print(e.error)
   exit(1)
 
-keywords = ''.join(filter(str.isalpha, response.choices[0].text.lower())).replace("keyword","")[0:15]
+keywords = ''.join(filter(str.isalpha, response['choices'][0]['message']['content'].lower())).replace("keyword","")[0:15]
 
 print("Prompt: " + blogprompt)
 print("Keywords: " + keywords)

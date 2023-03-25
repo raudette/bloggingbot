@@ -43,6 +43,7 @@ interestingtopics = []
 for category in config['categories']:
   interestingtopics.append(category)
 maxagehours=config['maxagehours']
+minagehours=config['minagehours']
 tags=config['tags']
 
 allcommenttext=""
@@ -61,7 +62,7 @@ for index, submission in enumerate(submissions):
   if (submission.link_flair_text) in interestingtopics:
     howlongago = datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(submission.created_utc)
     #check for fresh content
-    if (howlongago.total_seconds()) < (maxagehours*60*60):
+    if (minagehours*60*60) <= (howlongago.total_seconds()) < (maxagehours*60*60):
       numcomments= len(submission.comments.list())
       if numcomments > mostcomments:
         mostcomments=numcomments
@@ -82,14 +83,12 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 blogprompt = "Write a blog post about this text: \n\n " + allcommenttext +"\n\n"
 
 try:
-  response = openai.Completion.create(
-    model="text-davinci-003",
-    prompt="identify 2 keywords from the following text:\n" + allcommenttext,
-    temperature=0.7,
-    max_tokens=30,
-    top_p=1,
-    frequency_penalty=0,
-    presence_penalty=1
+  response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+          {"role": "system", "content": "You are a helpful assistant"},
+          {"role": "user", "content": "identify 2 keywords from the following text:\n" + allcommenttext},
+      ],
   )
 except openai.error.OpenAIError as e:
   print("Error")
@@ -97,7 +96,7 @@ except openai.error.OpenAIError as e:
   print(e.error)
   exit(1)
 
-keywords = ''.join(filter(str.isalpha, response.choices[0].text.lower())).replace("keyword","")[0:15]
+keywords = ''.join(filter(str.isalpha, response['choices'][0]['message']['content'].lower())).replace("keyword","")[0:15]
 
 print("Prompt: " + blogprompt)
 print("Keywords: " + keywords)
