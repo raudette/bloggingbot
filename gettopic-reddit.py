@@ -58,7 +58,6 @@ mostcommentedindex=0
 
 #find a submission that meets our age and category criteria, collect the comments of the most commented one
 for index, submission in enumerate(submissions):
-  interestingtopics = ['Buying','Investing','Discussion','Requesting Advice','New Construction','House','News']
   if (submission.link_flair_text) in interestingtopics:
     howlongago = datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(submission.created_utc)
     #check for fresh content
