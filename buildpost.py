@@ -289,13 +289,14 @@ if args.noninteractive:
     articleprompt=data['prompt']
     tags=data['tags']
     sourceurl=data['sourceurl']
+    imageprompt=data['imageprompt']
   else:
     identifier=args.identifier
     articleprompt=args.articleprompt
     tags=str(args.tags)
     sourceurl=str(args.sourceurl)
+    imageprompt=str(args.imageprompt)
   title=str(args.title)
-  imageprompt=str(args.imageprompt)
   setupfolders()
   getarticle()
   if title=="None":
