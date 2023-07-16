@@ -215,6 +215,14 @@ def getarticle():
   print(response['choices'][0]['finish_reason'])
   #articletext=response.choices[0].text
   articletext = response['choices'][0]['message']['content']
+
+  #get rid of surplus title added by latest version of GPT-3.5-turbo
+  if articletext[0:7]=='Title: ':
+    endoffirstparagraph = articletext.index("\n\n", 0)+2
+    articletext=articletext[endoffirstparagraph:]
+
+
+
   pusharticle()  
 
 def createtitle():
@@ -236,6 +244,8 @@ def createtitle():
     exit(1)
 
   title=response['choices'][0]['message']['content'].replace('"','')
+  #latest version of GPT3.5 has annoying habit of putting Title: in the Title - let's get rid of it
+  title=title.replace('Title: ','')
 
   pusharticle()  
 
