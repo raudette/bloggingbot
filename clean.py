@@ -14,13 +14,8 @@ identifier=data['identifier']
 draftfolder="./draft/" + identifier
 postfolder=postrootfolder + identifier
 
-print("Delete folders (y/n)?")
+print("Deleting folders")
 print(draftfolder)
 print(postfolder)
-proceed = input()
-if "y" in proceed:
-    print("Deleting")
-    shutil.rmtree(draftfolder)
-    shutil.rmtree(postfolder)
-else:
-    print("Nothing deleted")
+shutil.rmtree(draftfolder)
+shutil.rmtree(postfolder)
