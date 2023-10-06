@@ -7,6 +7,15 @@ import json
 
 load_dotenv()
 
+def generate_unique_filename(filename):
+    postrootfolder = os.getenv("POST_ROOT_FOLDER")
+    base_name, extension = os.path.splitext(filename)
+    count = 1
+    while os.path.exists(postrootfolder + filename):
+        filename = f"{base_name}_{count}{extension}"
+        count += 1
+    return filename
+
 maxlength=14000
 mincommentlength=250
 maxarticleage=22 #in hours
@@ -73,15 +82,20 @@ except openai.error.OpenAIError as e:
   print(e.error)
   exit(1)
 
+imageprompt = response['choices'][0]['message']['content'].lower()
 keywords = ''.join(filter(str.isalpha, response['choices'][0]['message']['content'].lower())).replace("keyword","")[0:15]
 
 print("Prompt: " + blogprompt)
 print("Keywords: " + keywords)
 
+identifier=generate_unique_filename(keywords)
+print("Identifier: " + identifier)
+
 outputprompt = {
   "prompt": blogprompt,
-  "identifier": keywords,
+  "identifier": identifier,
   "tags": "Technology",
+  "imageprompt": imageprompt,
   "sourceurl": URL + topcommentedurl
 }
 
