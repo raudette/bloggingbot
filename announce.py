@@ -13,15 +13,6 @@ def gettoot():
   print(tweetprompt)
 
   try:
-    response = openai.Completion.create(
-      model="text-davinci-003",
-      prompt=tweetprompt,
-      temperature=0.7,
-      max_tokens=60,
-      top_p=1,
-      frequency_penalty=0,
-      presence_penalty=1
-    )
     response = openai.ChatCompletion.create(
       model="gpt-3.5-turbo",
       messages=[

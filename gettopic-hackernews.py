@@ -82,8 +82,23 @@ except openai.error.OpenAIError as e:
   print(e.error)
   exit(1)
 
-imageprompt = response['choices'][0]['message']['content'].lower()
 keywords = ''.join(filter(str.isalpha, response['choices'][0]['message']['content'].lower())).replace("keyword","")[0:15]
+
+try:
+  response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+          {"role": "system", "content": "You are a helpful assistant"},
+          {"role": "user", "content": "Identify and describe an object from this text with fewer than 10 words:\n" + allcommenttext},
+      ],
+  )
+except openai.error.OpenAIError as e:
+  print("Error")
+  print(e.http_status)
+  print(e.error)
+  exit(1)
+
+imageprompt = response['choices'][0]['message']['content']
 
 print("Prompt: " + blogprompt)
 print("Keywords: " + keywords)
