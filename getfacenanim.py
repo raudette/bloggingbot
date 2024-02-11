@@ -1,3 +1,4 @@
+# Python script to automate generating USD-format face animation from nVidia's Audio2Face model
 import requests
 import os
 from dotenv import load_dotenv
