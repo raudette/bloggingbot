@@ -13,15 +13,6 @@ def gettoot():
   print(tweetprompt)
 
   try:
-    response = openai.Completion.create(
-      model="text-davinci-003",
-      prompt=tweetprompt,
-      temperature=0.7,
-      max_tokens=60,
-      top_p=1,
-      frequency_penalty=0,
-      presence_penalty=1
-    )
     response = openai.ChatCompletion.create(
       model="gpt-3.5-turbo",
       messages=[
@@ -114,19 +105,17 @@ twitter_consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
 twitter_consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
 twitter_access_token = os.getenv("TWITTER_ACCESS_TOKEN")
 twitter_access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+twitter_bearer_token = os.getenv("TWITTER_BEARER_TOKEN")
 
 if len(twitter_consumer_key)>5:
   #if too long... skip twitter
   if len(toot)<280:
     print("Posting to Twitter")
     # Authenticate to Twitter
-    auth = tweepy.OAuthHandler(twitter_consumer_key, 
-        twitter_consumer_secret)
-    auth.set_access_token(twitter_access_token, 
-        twitter_access_token_secret )
-
-    api = tweepy.API(auth)
-
-    api.verify_credentials()
-
-    api.update_status(toot)
+    client = tweepy.Client(bearer_token=twitter_bearer_token, 
+                          access_token=twitter_access_token, 
+                          access_token_secret=twitter_access_token_secret, 
+                          consumer_key=twitter_consumer_key,
+                          consumer_secret=twitter_consumer_secret)
+    
+    client.create_tweet(text=toot)
