@@ -56,7 +56,7 @@ print("Getting: " + URL + topcommentedurl)
 page= requests.get(URL + topcommentedurl)
 soup = BeautifulSoup(page.content, "html.parser")
 
-comments = soup.find_all("span", {"class": "commtext c00"})
+comments = soup.find_all("div", {"class": "commtext c00"})
 
 allcommenttext=""
 for comment in comments:
