@@ -3,30 +3,33 @@ from dotenv import load_dotenv
 import os
 import json
 import openai
+from openai import OpenAI
 import tweepy
 import argparse
 import re
 
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 def gettoot():
   global toot
-  tweetprompt="Write a tweet with less than 200 characters introducing a blog post titled: "+title
+  #tweetprompt="Write a tweet with less than 200 characters introducing a blog post titled: "+title
+  tweetprompt="Write a thoughtful and humorous tweet, with less than 200 characters, introducing this article:\n\n"+articletext
   print(tweetprompt)
 
   try:
-    response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo",
-      messages=[
-            {"role": "system", "content": "You are a helpful assistant"},
-            {"role": "user", "content": tweetprompt},
-        ],
-    )
-  except openai.error.OpenAIError as e:
+    response = client.chat.completions.create(model="gpt-4o",
+    messages=[
+          {"role": "system", "content": "You were born in 1975 in Kalamazoo, Michigan.  You are an American researcher and hacker, and hold a Ph.D in electrical engineering from MIT.  You have written books about reverse engineering.  You are a resident advisor and mentor to an early stage hardware accelerator and venture capital firm."},
+          {"role": "user", "content": tweetprompt},
+      ])
+  except openai.OpenAIError as e:
     print("Error")
     print(e.http_status)
     print(e.error)
     exit(1)
-    
-  toot=response['choices'][0]['message']['content'].replace('"','')
+
+  toot=response.choices[0].message.content.replace('"','')
   #sometimes, ChatGPT inserts example placeholder URLs.  This replaces it with correct URL.
   toot = re.sub(r'http\S+', post_url, toot)
 
@@ -55,9 +58,7 @@ parser.add_argument("-ni", "--noninteractive", help="Don't ask for confirmation 
 args = parser.parse_args()
 
 
-load_dotenv()
 postrootfolder=str(os.getenv("POST_ROOT_FOLDER"))
-openai.api_key = os.getenv("OPENAI_API_KEY")
 site_url=str(os.getenv("SITE_URL"))
 
 #open current working file
@@ -73,8 +74,7 @@ post_url=site_url +"post/"+ identifier + "/"
 f = open(filename)
 data = json.load(f)
 title=data['title']
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
+articletext=data['articletext']
 
 toot=''
 maxtries=10
@@ -93,7 +93,7 @@ if args.noninteractive==False:
   proceed = input()
   if "n" in proceed:
     quit()
-    
+
 mastodon_access_token = os.getenv("MASTODON_ACCESS_TOKEN")
 
 if len(mastodon_access_token)>5:
@@ -117,5 +117,5 @@ if len(twitter_consumer_key)>5:
                           access_token_secret=twitter_access_token_secret, 
                           consumer_key=twitter_consumer_key,
                           consumer_secret=twitter_consumer_secret)
-    
+
     client.create_tweet(text=toot)

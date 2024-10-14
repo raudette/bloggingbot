@@ -2,10 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import openai
+from openai import OpenAI
+
 from dotenv import load_dotenv
 import json
 
 load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_unique_filename(filename):
     postrootfolder = os.getenv("POST_ROOT_FOLDER")
@@ -16,7 +20,7 @@ def generate_unique_filename(filename):
         count += 1
     return filename
 
-maxlength=14000
+maxlength=28000
 mincommentlength=250
 maxarticleage=22 #in hours
 currenttopcomments=0
@@ -64,41 +68,36 @@ for comment in comments:
     if len(allcommenttext+comment.text)+5<maxlength:
       allcommenttext=allcommenttext+" "+comment.text.strip()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
-blogprompt = "Write an article about this text: \n\n " + allcommenttext +"\n\n"
+blogprompt = "Write a thoughtful article about this discussion you just read.  Don't reference the discussion itself, write about the content of the discussion: \n\n " + allcommenttext +"\n\n"
 
 try:
-  response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-          {"role": "system", "content": "You are a helpful assistant"},
-          {"role": "user", "content": "identify 2 keywords from the following text:\n" + allcommenttext},
-      ],
-  )
-except openai.error.OpenAIError as e:
+  response = client.chat.completions.create(model="gpt-4o-mini",
+  messages=[
+        {"role": "system", "content": "You are a helpful assistant"},
+        {"role": "user", "content": "identify 2 keywords from the following text:\n" + allcommenttext},
+    ])
+except openai.OpenAIError as e:
   print("Error")
   print(e.http_status)
   print(e.error)
   exit(1)
 
-keywords = ''.join(filter(str.isalpha, response['choices'][0]['message']['content'].lower())).replace("keyword","")[0:15]
+keywords = ''.join(filter(str.isalpha, response.choices[0].message.content.lower())).replace("keyword","")[0:15]
 
 try:
-  response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-          {"role": "system", "content": "You are a helpful assistant"},
-          {"role": "user", "content": "Identify and describe an object from this text with fewer than 10 words:\n" + allcommenttext},
-      ],
-  )
-except openai.error.OpenAIError as e:
+  response = client.chat.completions.create(model="gpt-4o-mini",
+  messages=[
+        {"role": "system", "content": "You are a helpful assistant"},
+        {"role": "user", "content": "Identify and describe an object from this text with fewer than 10 words:\n" + allcommenttext},
+    ])
+except openai.OpenAIError as e:
   print("Error")
   print(e.http_status)
   print(e.error)
   exit(1)
 
-imageprompt = response['choices'][0]['message']['content']
+imageprompt = response.choices[0].message.content
 
 print("Prompt: " + blogprompt)
 print("Keywords: " + keywords)

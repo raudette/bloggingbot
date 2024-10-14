@@ -1,5 +1,6 @@
 import os
 import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 import shutil
 from datetime import datetime
@@ -8,7 +9,8 @@ import argparse
 import json
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 postrootfolder=str(os.getenv("POST_ROOT_FOLDER"))
 author=str(os.getenv("AUTHOR"))
 
@@ -129,17 +131,16 @@ def getimage():
   global iImageRevision
 
   try:
-    response = openai.Image.create(
-      prompt=imageprompt,
-      n=1,
-      size="256x256"
-    )
-    image_url = response['data'][0]['url']
+    response = client.images.generate(prompt=imageprompt,
+    model="dall-e-3",
+    n=1,
+    size="1024x1024")
+    image_url = response.data[0].url
     versionfilename="./draft/"+identifier+"/"+identifier+"."+str(iImageRevision)+".png"
     print("Retrieving "+image_url)
     print("Writing to "+versionfilename)
     urllib.request.urlretrieve(image_url, versionfilename)
-  except openai.error.OpenAIError as e:
+  except openai.OpenAIError as e:
     print("Error")
     print(e.http_status)
     print(e.error)
@@ -175,36 +176,13 @@ def getarticle():
   global articleprompt
 
   try:
-#    response = openai.ChatCompletion.create(
-#      model="gpt-3.5-turbo",
-#      messages=[
-#            {"role": "user", "content": articleprompt},
-#        ],
-#      temperature=0.7,
-#      max_tokens=700,
-#      top_p=1,
-#      frequency_penalty=1,
-#      presence_penalty=0
-#    )
-    response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo",
-      messages=[
-            {"role": "system", "content": "You are a journalist"},
-            {"role": "user", "content": articleprompt},
-        ],
-    )
+    response = client.chat.completions.create(model="gpt-4o",
+    messages=[
+          {"role": "system", "content": "You were born in 1975 in Kalamazoo, Michigan.  You are an American researcher and hacker, and hold a Ph.D in electrical engineering from MIT.  You have written books about reverse engineering.  You are a resident advisor and mentor to an early stage hardware accelerator and venture capital firm."},
+          {"role": "user", "content": articleprompt},
+      ])
 
-#    response = openai.Completion.create(
-#      model="text-davinci-003",
-#      model="gpt-3.5-turbo",
-#      prompt=articleprompt,
-#      temperature=0.7,
-#      max_tokens=700,
-#      top_p=1,
-#      frequency_penalty=1,
-#      presence_penalty=0
-#    )
-  except openai.error.OpenAIError as e:
+  except openai.OpenAIError as e:
     print("Error")
     print(e.http_status)
     print(e.error)
@@ -212,9 +190,9 @@ def getarticle():
 
   #print(response)
   print("Finish reason: ")
-  print(response['choices'][0]['finish_reason'])
+  print(response.choices[0].finish_reason)
   #articletext=response.choices[0].text
-  articletext = response['choices'][0]['message']['content']
+  articletext = response.choices[0].message.content
 
   #get rid of surplus title added by latest version of GPT-3.5-turbo
   if articletext[0:7]=='Title: ':
@@ -230,20 +208,18 @@ def createtitle():
   global title
 
   try:
-    response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo",
-      messages=[
-            {"role": "system", "content": "You are a journalist"},
-            {"role": "user", "content": "Create a catchy title for the following blog text:\n" + articletext},
-        ],
-    )
-  except openai.error.OpenAIError as e:
+    response = client.chat.completions.create(model="gpt-4o",
+    messages=[
+          {"role": "system", "content": "You are a journalist"},
+          {"role": "user", "content": "Create a catchy title for the following blog text:\n" + articletext},
+      ])
+  except openai.OpenAIError as e:
     print("Error")
     print(e.http_status)
     print(e.error)
     exit(1)
 
-  title=response['choices'][0]['message']['content'].replace('"','')
+  title=response.choices[0].message.content.replace('"','')
   #latest version of GPT3.5 has annoying habit of putting Title: in the Title - let's get rid of it
   title=title.replace('Title: ','')
 
@@ -261,6 +237,7 @@ def archivesources():
     "imageprompt": imageprompt,
     "sourceurl": sourceurl,
     "title": title,
+    "articletext":articletext
   }
 
   jsonarchivesources = json.dumps(archivesources)
@@ -271,7 +248,7 @@ def archivesources():
   with open(draftcopy, 'w') as f:
     f.write(jsonarchivesources)
   shutil.copyfile(draftcopy,destinationfile)
-  
+
 
 
 parser = argparse.ArgumentParser()
