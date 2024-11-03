@@ -35,7 +35,7 @@ hardcodeurl =  args.hackernewsurl
 page= requests.get(hardcodeurl)
 soup = BeautifulSoup(page.content, "html.parser")
 
-comments = soup.find_all("span", {"class": "commtext c00"})
+comments = soup.find_all("div", {"class": "commtext c00"})
 
 allcommenttext=""
 for comment in comments:
